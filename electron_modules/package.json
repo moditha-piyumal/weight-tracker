@@ -1,0 +1,11 @@
+{
+	"name": "electron_modules",
+	"version": "1.0.0",
+	"main": "index.js",
+	"description": "Native modules compiled for Electron runtime",
+	"license": "ISC",
+	"dependencies": {
+		"better-sqlite3": "^12.4.1",
+		"electron-rebuild": "^3.2.9"
+	}
+}

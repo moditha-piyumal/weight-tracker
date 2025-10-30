@@ -2,14 +2,12 @@
 	"name": "weight-tracker",
 	"version": "1.0.0",
 	"main": "main.js",
-	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1",
-		"start": "electron ."
-	},
-	"keywords": [],
-	"author": "",
+	"description": "Local-first weight tracker with GoT-themed milestones",
 	"license": "ISC",
-	"description": "",
+	"scripts": {
+		"start": "node ./node_modules/electron/cli.js .",
+		"rebuild-electron": "cd electron_modules && npx electron-rebuild -f -w better-sqlite3 --version 38.1.2"
+	},
 	"devDependencies": {
 		"electron": "^38.1.2"
 	}

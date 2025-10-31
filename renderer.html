@@ -19,65 +19,69 @@
             color: #fff;
         }
 
-        /* Semi-transparent overlay for readability */
         .overlay {
             background: rgba(0, 0, 0, 0.6);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-start;
             padding: 30px;
         }
 
         h1 {
-            margin-top: 20px;
+            margin: 20px 0;
             font-size: 2rem;
             text-align: center;
             color: #ffcc70;
             text-shadow: 2px 2px 5px #000;
         }
 
-        /* === Form Styling === */
+        /* === Form Section === */
         .form-card {
             background: rgba(255, 255, 255, 0.15);
             border-radius: 15px;
             box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
-            padding: 20px 25px;
-            width: 320px;
-            margin-bottom: 40px;
-            text-align: center;
-        }
-
-        label {
-            display: block;
-            margin: 10px 0 5px;
-            font-weight: bold;
-            color: #ffddaa;
-        }
-
-        input {
+            padding: 15px 25px;
             width: 90%;
-            padding: 8px;
-            margin-bottom: 10px;
+            max-width: 750px;
+            margin-bottom: 20px;
+        }
+
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .form-row label {
+            font-weight: 300;
+            color: #ffddaa;
+            font-size: 0.9rem;
+        }
+
+        .form-row input {
+            padding: 8px 12px;
             border-radius: 8px;
             border: none;
             text-align: center;
-            font-size: 1rem;
+            font-size: 0.9rem;
+            width: 130px;
         }
 
-        button {
+        .form-row button {
             background: linear-gradient(45deg, #ff8a00, #e52e71);
             border: none;
             border-radius: 8px;
             color: white;
-            padding: 10px 15px;
-            font-size: 1rem;
+            padding: 10px 18px;
+            font-size: 0.9rem;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: 0.2s ease-in-out;
         }
 
-        button:hover {
+        .form-row button:hover {
             transform: scale(1.05);
             box-shadow: 0 0 10px #ffcc70;
         }
@@ -85,17 +89,37 @@
         /* === Chart Containers === */
         .chart-container {
             width: 90%;
-            max-width: 700px;
-            margin-bottom: 40px;
+            max-width: 900px;
             background: rgba(255, 255, 255, 0.12);
-            padding: 20px;
             border-radius: 12px;
             box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+            padding: 12px 20px;
+            margin-top: 20px;
         }
 
-        canvas {
-            width: 100%;
-            height: 300px;
+        /* Let the weight chart take the rest of the screen height */
+        .weight-chart-wrap {
+            flex: 1;
+            /* min-height: calc(100vh - 250px); */
+            /* adjusts dynamically below header + form */
+            /* max-height: calc(100vh - 180px); */
+            max-height: 570px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding-bottom: 70px;
+        }
+
+        .weight-chart-wrap canvas {
+            width: 100% !important;
+            height: 100% !important;
+            display: block;
+        }
+
+        /* Workout chart fixed height */
+        .workout-chart-wrap {
+            height: 280px;
         }
     </style>
 </head>
@@ -104,29 +128,30 @@
     <div class="overlay">
         <h1>🏋️‍♂️ Daily Weight Tracker</h1>
 
-        <!-- === Form Card === -->
+        <!-- === Input Form === -->
         <div class="form-card">
-            <form id="entryForm">
+            <form id="entryForm" class="form-row">
                 <label for="date">Date</label>
                 <input type="text" id="date" readonly />
 
                 <label for="weight">Weight (kg)</label>
                 <input type="number" id="weight" step="0.1" placeholder="e.g. 82.5" required />
 
-                <label for="workout">Workout Time (minutes)</label>
+                <label for="workout">Workout (min)</label>
                 <input type="number" id="workout" step="1" placeholder="e.g. 45" required />
 
-                <button type="submit">💾 Save Entry</button>
+                <button type="submit">Save</button>
             </form>
         </div>
 
-        <!-- === Chart Containers === -->
-        <div class="chart-container">
+        <!-- === Weight Chart === -->
+        <div class="chart-container weight-chart-wrap">
             <h3>📈 Weight Progress</h3>
             <canvas id="weightChart"></canvas>
         </div>
 
-        <div class="chart-container">
+        <!-- === Workout Chart === -->
+        <div class="chart-container workout-chart-wrap">
             <h3>🔥 Workout Duration</h3>
             <canvas id="workoutChart"></canvas>
         </div>

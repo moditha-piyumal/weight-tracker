@@ -1,14 +1,138 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Weight Tracker</title>
+
+    <!-- ✅ Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        /* === Global Styles === */
+        body {
+            margin: 0;
+            font-family: "Poppins", sans-serif;
+            background: url("wtbackground.jpg") no-repeat center center fixed;
+            background-size: cover;
+            color: #fff;
+        }
+
+        /* Semi-transparent overlay for readability */
+        .overlay {
+            background: rgba(0, 0, 0, 0.6);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 30px;
+        }
+
+        h1 {
+            margin-top: 20px;
+            font-size: 2rem;
+            text-align: center;
+            color: #ffcc70;
+            text-shadow: 2px 2px 5px #000;
+        }
+
+        /* === Form Styling === */
+        .form-card {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+            padding: 20px 25px;
+            width: 320px;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: bold;
+            color: #ffddaa;
+        }
+
+        input {
+            width: 90%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border: none;
+            text-align: center;
+            font-size: 1rem;
+        }
+
+        button {
+            background: linear-gradient(45deg, #ff8a00, #e52e71);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            padding: 10px 15px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 10px #ffcc70;
+        }
+
+        /* === Chart Containers === */
+        .chart-container {
+            width: 90%;
+            max-width: 700px;
+            margin-bottom: 40px;
+            background: rgba(255, 255, 255, 0.12);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+        }
+
+        canvas {
+            width: 100%;
+            height: 300px;
+        }
+    </style>
 </head>
 
 <body>
-    <h1>Hello, Moditha</h1>
-    <p>This is a software to track my weight!</p>
+    <div class="overlay">
+        <h1>🏋️‍♂️ Daily Weight Tracker</h1>
+
+        <!-- === Form Card === -->
+        <div class="form-card">
+            <form id="entryForm">
+                <label for="date">Date</label>
+                <input type="text" id="date" readonly />
+
+                <label for="weight">Weight (kg)</label>
+                <input type="number" id="weight" step="0.1" placeholder="e.g. 82.5" required />
+
+                <label for="workout">Workout Time (minutes)</label>
+                <input type="number" id="workout" step="1" placeholder="e.g. 45" required />
+
+                <button type="submit">💾 Save Entry</button>
+            </form>
+        </div>
+
+        <!-- === Chart Containers === -->
+        <div class="chart-container">
+            <h3>📈 Weight Progress</h3>
+            <canvas id="weightChart"></canvas>
+        </div>
+
+        <div class="chart-container">
+            <h3>🔥 Workout Duration</h3>
+            <canvas id="workoutChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Renderer Logic -->
     <script src="renderer.js"></script>
 </body>
 

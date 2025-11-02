@@ -90,6 +90,14 @@ async function checkGoalUnlock(currentWeight) {
 		console.error("Failed to check goals:", err);
 	}
 }
+document.getElementById("backupBtn").addEventListener("click", async () => {
+	const res = await ipcRenderer.invoke("backup-database");
+	if (res.ok) {
+		alert("✅ Database backup created successfully!");
+	} else {
+		alert("❌ Backup failed: " + res.message);
+	}
+});
 
 // =============================================
 // 🚀 MAIN ENTRY POINT
@@ -271,16 +279,8 @@ async function loadAndRenderCharts() {
 					{
 						label: "Workout (minutes)",
 						data: workouts,
-						backgroundColor: [
-							"#FFB6C1",
-							"#FFD700",
-							"#ADFF2F",
-							"#87CEEB",
-							"#FFA500",
-							"#20B2AA",
-							"#FF69B4",
-						],
-						borderColor: "#fff",
+						backgroundColor: "#461212ff",
+						borderColor: "#c28585ff",
 						borderWidth: 2,
 					},
 				],

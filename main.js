@@ -1,6 +1,7 @@
 // 🔧 Force Node to search our electron_modules first
 const path = require("path");
 const Module = require("module");
+const fs = require("fs");
 
 // Set NODE_PATH and re-initialize Node's resolver
 process.env.NODE_PATH = path.join(
@@ -200,4 +201,20 @@ ipcMain.handle("get-entries", () => {
 		)
 		.all();
 	return rows;
+});
+
+ipcMain.handle("backup-database", () => {
+	try {
+		const src = path.join(__dirname, "db", "weight-tracker.db");
+		const dest = path.join(
+			__dirname,
+			"db",
+			`weight-tracker-backup-${Date.now()}.db`
+		);
+		fs.copyFileSync(src, dest);
+		return { ok: true };
+	} catch (err) {
+		console.error("Backup error:", err);
+		return { ok: false, message: err.message };
+	}
 });

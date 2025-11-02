@@ -131,6 +131,7 @@
         /* Workout chart fixed height */
         .workout-chart-wrap {
             height: 280px;
+            margin-bottom: 130px;
         }
 
         /* Modal overlay */
@@ -224,6 +225,31 @@
                 transform: translateY(0);
             }
         }
+
+        .backup-btn {
+            position: fixed;
+            /* Keep it in a fixed position relative to the viewport */
+            bottom: 20px;
+            /* Distance from the bottom edge of the window */
+            left: 50%;
+            /* Move to the horizontal center */
+            transform: translateX(-50%);
+            /* Adjust to perfectly center it */
+            background: #ffcc70;
+            border: none;
+            color: #111;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            transition: background 0.3s, transform 0.2s;
+        }
+
+        .backup-btn:hover {
+            background: #ffe299;
+            transform: translateX(-50%) scale(1.05);
+        }
     </style>
 </head>
 
@@ -271,6 +297,7 @@
             <canvas id="workoutChart"></canvas>
         </div>
     </div>
+    <button id="backupBtn" class="backup-btn">💾 Backup Database</button>
 
     <!-- Renderer Logic -->
     <script src="renderer.js"></script>

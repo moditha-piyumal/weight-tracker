@@ -59,33 +59,32 @@ async function checkGoalUnlock(currentWeight) {
 			const modal = document.getElementById("goalModal");
 			const emojiEl = document.getElementById("goalModalEmoji");
 			const messageEl = document.getElementById("goalModalMessage");
+			const closeBtn = document.getElementById("goalModalClose");
 
-			// 🧠 Separate the emoji at the start of the message (if any)
-			// Example message: "🐉 You have conquered..."
+			// 🧠 Separate the emoji at the start (if any)
 			const match = res.message.match(
 				/^([\p{Emoji_Presentation}\p{Extended_Pictographic}])\s*(.*)$/u
 			);
-
 			if (match) {
-				emojiEl.textContent = match[1]; // The emoji
-				messageEl.textContent = match[2]; // The rest of the message
+				emojiEl.textContent = match[1];
+				messageEl.textContent = match[2];
 			} else {
-				emojiEl.textContent = "🏆"; // Default emoji if none found
+				emojiEl.textContent = "🏆";
 				messageEl.textContent = res.message;
 			}
 
-			// Show modal
+			// Show the modal
 			modal.classList.add("visible");
 
-			// Close manually
-			document.getElementById("goalModalClose").onclick = () => {
+			// 🖱️ Close when the × is clicked
+			closeBtn.onclick = () => {
 				modal.classList.remove("visible");
 			};
 
-			// Auto close after 5 seconds
-			setTimeout(() => {
-				modal.classList.remove("visible");
-			}, 5000);
+			// 🖱️ Optional: also close when clicking the dark background
+			modal.onclick = (e) => {
+				if (e.target === modal) modal.classList.remove("visible");
+			};
 		}
 	} catch (err) {
 		console.error("Failed to check goals:", err);

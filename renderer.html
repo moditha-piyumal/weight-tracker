@@ -5,6 +5,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Weight Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Lato:wght@400&display=swap"
+        rel="stylesheet">
+
 
     <!-- ✅ Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -13,7 +16,7 @@
         /* === Global Styles === */
         body {
             margin: 0;
-            font-family: "Poppins", sans-serif;
+            font-family: 'Lato', sans-serif;
             background: url("wtbackground.jpg") no-repeat center center fixed;
             background-size: cover;
             color: #fff;
@@ -31,9 +34,17 @@
         h1 {
             margin: 20px 0;
             font-size: 2rem;
+            font-family: 'Cinzel Decorative', cursive;
+            letter-spacing: 1px;
             text-align: center;
             color: #ffcc70;
             text-shadow: 2px 2px 5px #000;
+        }
+
+        h2,
+        .goal-modal-title {
+            font-family: 'Cinzel Decorative', cursive;
+            letter-spacing: 1px;
         }
 
         /* === Form Section === */
@@ -169,16 +180,49 @@
         /* Close button */
         .goal-modal-close {
             position: absolute;
-            top: 12px;
+            top: 15px;
             right: 20px;
+            background: transparent;
+            border: 2px solid #ffcc70;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             color: #ffcc70;
-            font-size: 1.5rem;
+            font-size: 1.3rem;
+            font-weight: bold;
             cursor: pointer;
+            transition: all 0.3s ease;
         }
+
+        .goal-modal-close:hover {
+            background: #ffcc70;
+            color: #111;
+            transform: scale(1.1);
+        }
+
 
         #goalModalEmoji {
             font-size: 2.2rem;
             margin-right: 8px;
+        }
+
+        .goal-modal.visible .goal-modal-content {
+            animation: fadeInUp 0.4s ease forwards;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
     </style>
 </head>

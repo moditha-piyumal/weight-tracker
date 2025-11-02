@@ -121,6 +121,60 @@
         .workout-chart-wrap {
             height: 280px;
         }
+
+        /* Modal overlay */
+        .goal-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .goal-modal.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Modal content card */
+        .goal-modal-content {
+            background: #111;
+            color: #ffcc70;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(255, 204, 112, 0.5);
+        }
+
+        .goal-modal-title {
+            margin-top: 0;
+            font-size: 1.8rem;
+        }
+
+        .goal-modal-message {
+            margin: 20px 0;
+            font-size: 1.1rem;
+        }
+
+        /* Close button */
+        .goal-modal-close {
+            position: absolute;
+            top: 12px;
+            right: 20px;
+            color: #ffcc70;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
     </style>
 </head>
 
@@ -142,6 +196,14 @@
 
                 <button type="submit">Save</button>
             </form>
+        </div>
+        <!-- Goal Unlock Modal -->
+        <div id="goalModal" class="goal-modal hidden">
+            <div class="goal-modal-content">
+                <span id="goalModalClose" class="goal-modal-close">&times;</span>
+                <h2 class="goal-modal-title">🏆 Milestone Unlocked!</h2>
+                <p id="goalModalMessage" class="goal-modal-message"></p>
+            </div>
         </div>
 
         <!-- === Weight Chart === -->

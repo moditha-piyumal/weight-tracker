@@ -47,6 +47,38 @@ function simpleMovingAverage(data, windowSize) {
 	return out;
 }
 
+// ===============================
+// 🎯 Ask main process to check goals for this weight
+//    - Calls ipcMain.handle("check-goals") in main.js
+//    - If a goal was unlocked, shows the reward popup (for now: alert)
+// ===============================
+async function checkGoalUnlock(currentWeight) {
+	try {
+		const res = await ipcRenderer.invoke("check-goals", currentWeight);
+		if (res && res.unlocked && res.message) {
+			// Populate modal
+			const modal = document.getElementById("goalModal");
+			const messageEl = document.getElementById("goalModalMessage");
+			messageEl.textContent = res.message;
+
+			// Show modal
+			modal.classList.add("visible");
+
+			// Add close logic
+			document.getElementById("goalModalClose").onclick = () => {
+				modal.classList.remove("visible");
+			};
+
+			// Optional: auto‐close after 5 seconds
+			setTimeout(() => {
+				modal.classList.remove("visible");
+			}, 5000);
+		}
+	} catch (err) {
+		console.error("Failed to check goals:", err);
+	}
+}
+
 // =============================================
 // 🚀 MAIN ENTRY POINT
 // =============================================
@@ -80,7 +112,11 @@ window.addEventListener("DOMContentLoaded", () => {
 			});
 			console.log("Result from main:", result);
 			alert(`✅ Entry ${result.status}!`);
-			await loadAndRenderCharts(); // refresh chart
+			// 👇 ADD THIS LINE — check if a goal was unlocked at this weight
+			await checkGoalUnlock(weight);
+
+			// Refresh the charts afterwards so you see the new point immediately
+			await loadAndRenderCharts();
 		} catch (err) {
 			console.error("❌ Failed to save entry:", err);
 			alert("Error saving entry!");

@@ -154,6 +154,37 @@ ipcMain.handle("save-entry", (event, data) => {
 		return { status: "error", message: err.message };
 	}
 });
+// =============================================
+// ⚔️ GOAL CHECKING HANDLER (After Save)
+// =============================================
+ipcMain.handle("check-goals", (event, currentWeight) => {
+	console.log("Checking goals for weight:", currentWeight);
+
+	// 1️⃣ Fetch goals not yet unlocked
+	const pendingGoals = db
+		.prepare(
+			`SELECT id, threshold_kg, message 
+       FROM goals 
+       WHERE unlocked_at_utc IS NULL 
+       ORDER BY threshold_kg DESC`
+		)
+		.all();
+
+	// 2️⃣ Compare weight to goal thresholds
+	for (const g of pendingGoals) {
+		if (currentWeight <= g.threshold_kg) {
+			db.prepare(`UPDATE goals SET unlocked_at_utc = ? WHERE id = ?`).run(
+				new Date().toISOString(),
+				g.id
+			);
+
+			console.log(`🏰 Goal unlocked: ${g.threshold_kg}kg`);
+			return { unlocked: true, message: g.message };
+		}
+	}
+
+	return { unlocked: false };
+});
 
 // ===============================
 // 📊 Fetch All Entries

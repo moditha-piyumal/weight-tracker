@@ -4,54 +4,25 @@
 
 // Import ipcRenderer directly since nodeIntegration is true
 const { ipcRenderer } = require("electron");
-
-// Wait until everything in the HTML is ready
-window.addEventListener("DOMContentLoaded", () => {
-	console.log("Renderer is running!");
-
-	// Auto-fill today's date in YYYY-MM-DD format
-	const dateField = document.getElementById("date");
-	const today = new Date().toLocaleDateString("en-CA");
-	dateField.value = today;
-	// Pre-fill with today's date, but allow manual editing
-	// const dateField = document.getElementById("date");
-	// dateField.value = new Date().toLocaleDateString("en-CA");
-
-	// Handle form submission (save entry)
-	const form = document.getElementById("entryForm");
-	form.addEventListener("submit", async (e) => {
-		e.preventDefault();
-
-		const weight = parseFloat(document.getElementById("weight").value);
-		const workout = parseInt(document.getElementById("workout").value);
-
-		if (isNaN(weight) || isNaN(workout)) {
-			alert("Please enter valid numbers!");
-			return;
-		}
-
-		try {
-			const date = today;
-			// ✅ get from input field
-			const result = await ipcRenderer.invoke("save-entry", {
-				date,
-				weight,
-				workout,
-			});
-
-			console.log("Result from main:", result);
-			alert(`✅ Entry ${result.status}!`);
-			await loadAndRenderCharts();
-		} catch (err) {
-			console.error("❌ Failed to save entry:", err);
-			alert("Error saving entry!");
-		}
-	});
-
-	// Load charts after DOM is ready
-	loadAndRenderCharts();
-});
-
+// ---- Goal Weights (top to bottom) ----
+const GOAL_WEIGHTS = [
+	83.0, 80.0, 76.7, 75.0, 73.5, 71.7, 69.0, 65.0, 63.7, 61.2, 59.9, 58.5, 57.0,
+	56.0, 55.0,
+];
+// Make a faint dashed horizontal line dataset for each goal
+function makeGoalDatasets(labels) {
+	// one dataset per goal; each dataset is a flat array at that y-value
+	return GOAL_WEIGHTS.map((kg) => ({
+		label: null, // no legend text (keeps legend clean)
+		data: labels.map(() => kg), // flat line across the x-range
+		borderColor: "rgba(255,255,255,0.25)",
+		borderWidth: 1,
+		borderDash: [4, 4],
+		pointRadius: 0,
+		fill: false,
+		order: 0, // draw under real data and MAs
+	}));
+}
 // ===== Helper: Simple Moving Average (SMA) =====
 // data: array of numbers (weights)
 // windowSize: 7 or 20
@@ -77,6 +48,50 @@ function simpleMovingAverage(data, windowSize) {
 
 	return out;
 }
+// Wait until everything in the HTML is ready
+window.addEventListener("DOMContentLoaded", () => {
+	console.log("Renderer is running!");
+
+	// Auto-fill today's date in YYYY-MM-DD format
+	const dateField = document.getElementById("date");
+	const today = new Date().toLocaleDateString("en-CA");
+	dateField.value = today;
+	// Pre-fill with today's date, but allow manual editing
+
+	// Handle form submission (save entry)
+	const form = document.getElementById("entryForm");
+	form.addEventListener("submit", async (e) => {
+		e.preventDefault();
+
+		const weight = parseFloat(document.getElementById("weight").value);
+		const workout = parseInt(document.getElementById("workout").value);
+
+		if (isNaN(weight) || isNaN(workout) || weight <= 0 || workout < 0) {
+			alert("Please enter valid positive numbers!");
+			return;
+		}
+
+		try {
+			const date = today;
+			// ✅ get from input field
+			const result = await ipcRenderer.invoke("save-entry", {
+				date,
+				weight,
+				workout,
+			});
+
+			console.log("Result from main:", result);
+			alert(`✅ Entry ${result.status}!`);
+			await loadAndRenderCharts();
+		} catch (err) {
+			console.error("❌ Failed to save entry:", err);
+			alert("Error saving entry!");
+		}
+	});
+
+	// Load charts after DOM is ready
+	loadAndRenderCharts();
+});
 
 // =============================================
 // 📊 Function: Load and Render Charts
@@ -119,12 +134,15 @@ async function loadAndRenderCharts() {
 		const weightCtx = document.getElementById("weightChart").getContext("2d");
 		const workoutCtx = document.getElementById("workoutChart").getContext("2d");
 
+		const goalLineDatasets = makeGoalDatasets(labels);
+
 		// 🎨 Weight Chart
 		window.weightChart = new Chart(weightCtx, {
 			type: "line",
 			data: {
 				labels,
 				datasets: [
+					...goalLineDatasets, // ⬅️ added this
 					{
 						label: "Weight (kg)",
 						data: weights,
@@ -135,25 +153,28 @@ async function loadAndRenderCharts() {
 						fill: true,
 						pointRadius: 5,
 						pointBackgroundColor: "#ffe6a7",
+						order: 2,
 					},
 					{
 						label: "SMA-7 (trend)",
 						data: sma7,
-						borderColor: "#7FDBFF", // light blue
+						borderColor: "#7FDBFF",
 						borderWidth: 2,
 						tension: 0.3,
-						pointRadius: 0, // no dots
-						spanGaps: true, // skip nulls cleanly
+						pointRadius: 0,
+						spanGaps: true,
+						order: 1,
 					},
 					{
 						label: "SMA-20 (trend)",
 						data: sma20,
-						borderColor: "#B10DC9", // purple
+						borderColor: "#B10DC9",
 						borderWidth: 2,
-						borderDash: [6, 6], // dashed
+						borderDash: [6, 6],
 						tension: 0.3,
 						pointRadius: 0,
 						spanGaps: true,
+						order: 1,
 					},
 				],
 			},
@@ -161,14 +182,40 @@ async function loadAndRenderCharts() {
 				responsive: true, // default, but keep it explicit
 				maintainAspectRatio: false,
 				plugins: {
-					legend: { labels: { color: "#fff" } },
+					legend: {
+						labels: {
+							color: "#fff",
+							// hide legend entries with null labels
+							filter: (legendItem, chartData) =>
+								!!chartData.datasets[legendItem.datasetIndex].label,
+						},
+					},
+					tooltip: { filter: (ctx) => !!ctx.dataset.label },
 				},
+
 				scales: {
 					x: { ticks: { color: "#fff" } },
 					y: {
 						min: 55,
 						max: 90,
-						ticks: { color: "#fff" },
+						ticks: {
+							color: "#fff",
+							// Force exact goal line values as tick positions
+							callback: (value) => value.toFixed(1) + " kg",
+						},
+						afterBuildTicks: (axis) => {
+							// Replace auto ticks with our custom goal weights (sorted descending)
+							axis.ticks = GOAL_WEIGHTS.slice()
+								.sort((a, b) => b - a)
+								.map((v) => ({ value: v }));
+							return axis.ticks;
+						},
+						grid: {
+							color: (ctx) =>
+								GOAL_WEIGHTS.includes(ctx.tick.value)
+									? "rgba(255,255,255,0.35)"
+									: "rgba(255,255,255,0.1)",
+						},
 					},
 				},
 			},

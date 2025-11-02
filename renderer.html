@@ -175,6 +175,11 @@
             font-size: 1.5rem;
             cursor: pointer;
         }
+
+        #goalModalEmoji {
+            font-size: 2.2rem;
+            margin-right: 8px;
+        }
     </style>
 </head>
 
@@ -201,10 +206,14 @@
         <div id="goalModal" class="goal-modal hidden">
             <div class="goal-modal-content">
                 <span id="goalModalClose" class="goal-modal-close">&times;</span>
-                <h2 class="goal-modal-title">🏆 Milestone Unlocked!</h2>
+                <h2 class="goal-modal-title">
+                    <span id="goalModalEmoji">🏆</span>
+                    Milestone Unlocked!
+                </h2>
                 <p id="goalModalMessage" class="goal-modal-message"></p>
             </div>
         </div>
+
 
         <!-- === Weight Chart === -->
         <div class="chart-container weight-chart-wrap">

@@ -56,20 +56,33 @@ async function checkGoalUnlock(currentWeight) {
 	try {
 		const res = await ipcRenderer.invoke("check-goals", currentWeight);
 		if (res && res.unlocked && res.message) {
-			// Populate modal
 			const modal = document.getElementById("goalModal");
+			const emojiEl = document.getElementById("goalModalEmoji");
 			const messageEl = document.getElementById("goalModalMessage");
-			messageEl.textContent = res.message;
+
+			// 🧠 Separate the emoji at the start of the message (if any)
+			// Example message: "🐉 You have conquered..."
+			const match = res.message.match(
+				/^([\p{Emoji_Presentation}\p{Extended_Pictographic}])\s*(.*)$/u
+			);
+
+			if (match) {
+				emojiEl.textContent = match[1]; // The emoji
+				messageEl.textContent = match[2]; // The rest of the message
+			} else {
+				emojiEl.textContent = "🏆"; // Default emoji if none found
+				messageEl.textContent = res.message;
+			}
 
 			// Show modal
 			modal.classList.add("visible");
 
-			// Add close logic
+			// Close manually
 			document.getElementById("goalModalClose").onclick = () => {
 				modal.classList.remove("visible");
 			};
 
-			// Optional: auto‐close after 5 seconds
+			// Auto close after 5 seconds
 			setTimeout(() => {
 				modal.classList.remove("visible");
 			}, 5000);

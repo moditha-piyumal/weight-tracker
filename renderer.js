@@ -1,62 +1,61 @@
 // =============================================
-// 🧠 Weight Tracker - Renderer.js (Fixed Version)
+// ⚖️ Weight Tracker - Renderer.js (Clean Version)
 // =============================================
 
-// Import ipcRenderer directly since nodeIntegration is true
+// ✅ Electron's IPC for communicating with main.js
 const { ipcRenderer } = require("electron");
-// ---- Goal Weights (top to bottom) ----
+
+// =============================================
+// 🎯 GOAL WEIGHTS (top → bottom)
+// =============================================
 const GOAL_WEIGHTS = [
 	83.0, 80.0, 76.7, 75.0, 73.5, 71.7, 69.0, 65.0, 63.7, 61.2, 59.9, 58.5, 57.0,
 	56.0, 55.0,
 ];
-// Make a faint dashed horizontal line dataset for each goal
+
+// =============================================
+// 🧩 HELPER FUNCTION: Create Goal Line Datasets
+// =============================================
+// Creates one dataset per goal weight — each a faint dashed horizontal line
 function makeGoalDatasets(labels) {
-	// one dataset per goal; each dataset is a flat array at that y-value
 	return GOAL_WEIGHTS.map((kg) => ({
-		label: null, // no legend text (keeps legend clean)
-		data: labels.map(() => kg), // flat line across the x-range
+		label: null, // keeps legend clean
+		data: labels.map(() => kg), // flat horizontal line
 		borderColor: "rgba(255,255,255,0.25)",
 		borderWidth: 1,
 		borderDash: [4, 4],
 		pointRadius: 0,
 		fill: false,
-		order: 0, // draw under real data and MAs
+		order: 0, // draw below other lines
 	}));
 }
-// ===== Helper: Simple Moving Average (SMA) =====
-// data: array of numbers (weights)
-// windowSize: 7 or 20
+
+// =============================================
+// 📉 HELPER FUNCTION: Simple Moving Average
+// =============================================
+// Returns a smoothed array for 7-day or 20-day averages
 function simpleMovingAverage(data, windowSize) {
-	const out = new Array(data.length).fill(null); // keep length same as data
-	let runningSum = 0;
+	const out = new Array(data.length).fill(null);
+	let sum = 0;
 
 	for (let i = 0; i < data.length; i++) {
-		runningSum += data[i];
-		// once we’ve added more than 'windowSize' items, subtract the element that falls out of the window
-		if (i >= windowSize) {
-			runningSum -= data[i - windowSize];
-		}
-
-		if (i >= windowSize - 1) {
-			// we have at least 'windowSize' items now
-			out[i] = +(runningSum / windowSize).toFixed(2); // round to 2 dp for neatness
-		} else {
-			// not enough history yet → keep as null so the chart leaves gaps
-			out[i] = null;
-		}
+		sum += data[i];
+		if (i >= windowSize) sum -= data[i - windowSize];
+		out[i] = i >= windowSize - 1 ? +(sum / windowSize).toFixed(2) : null;
 	}
 
 	return out;
 }
-// Wait until everything in the HTML is ready
+
+// =============================================
+// 🚀 MAIN ENTRY POINT
+// =============================================
 window.addEventListener("DOMContentLoaded", () => {
 	console.log("Renderer is running!");
 
-	// Auto-fill today's date in YYYY-MM-DD format
+	// Pre-fill today's date
 	const dateField = document.getElementById("date");
-	const today = new Date().toLocaleDateString("en-CA");
-	dateField.value = today;
-	// Pre-fill with today's date, but allow manual editing
+	dateField.value = new Date().toLocaleDateString("en-CA");
 
 	// Handle form submission (save entry)
 	const form = document.getElementById("entryForm");
@@ -66,35 +65,34 @@ window.addEventListener("DOMContentLoaded", () => {
 		const weight = parseFloat(document.getElementById("weight").value);
 		const workout = parseInt(document.getElementById("workout").value);
 
+		// ✅ Input validation
 		if (isNaN(weight) || isNaN(workout) || weight <= 0 || workout < 0) {
 			alert("Please enter valid positive numbers!");
 			return;
 		}
 
 		try {
-			const date = today;
-			// ✅ get from input field
+			const date = new Date().toLocaleDateString("en-CA");
 			const result = await ipcRenderer.invoke("save-entry", {
 				date,
 				weight,
 				workout,
 			});
-
 			console.log("Result from main:", result);
 			alert(`✅ Entry ${result.status}!`);
-			await loadAndRenderCharts();
+			await loadAndRenderCharts(); // refresh chart
 		} catch (err) {
 			console.error("❌ Failed to save entry:", err);
 			alert("Error saving entry!");
 		}
 	});
 
-	// Load charts after DOM is ready
+	// Load charts after startup
 	loadAndRenderCharts();
 });
 
 // =============================================
-// 📊 Function: Load and Render Charts
+// 📊 FUNCTION: Load + Render Charts
 // =============================================
 async function loadAndRenderCharts() {
 	console.log("🎨 Chart Render Triggered:", new Date().toLocaleTimeString());
@@ -108,41 +106,33 @@ async function loadAndRenderCharts() {
 			return;
 		}
 
-		// Extract data for charts
+		// Extract data arrays
 		const labels = entries.map((e) => e.date_local);
 		const weights = entries.map((e) => e.weight_kg_1dp);
+		const workouts = entries.map((e) => e.workout_minutes);
 		const sma7 = simpleMovingAverage(weights, 7);
 		const sma20 = simpleMovingAverage(weights, 20);
 
-		const workouts = entries.map((e) => e.workout_minutes);
+		// Prevent chart duplication by destroying existing instances
+		if (window.weightChart?.destroy) window.weightChart.destroy();
+		if (window.workoutChart?.destroy) window.workoutChart.destroy();
 
-		// Destroy existing charts to prevent overlap
-		if (
-			window.weightChart &&
-			typeof window.weightChart.destroy === "function"
-		) {
-			window.weightChart.destroy();
-		}
-		if (
-			window.workoutChart &&
-			typeof window.workoutChart.destroy === "function"
-		) {
-			window.workoutChart.destroy();
-		}
-
-		// Define chart contexts (only now that DOM is ready)
+		// Contexts
 		const weightCtx = document.getElementById("weightChart").getContext("2d");
 		const workoutCtx = document.getElementById("workoutChart").getContext("2d");
 
+		// Add horizontal goal lines
 		const goalLineDatasets = makeGoalDatasets(labels);
 
-		// 🎨 Weight Chart
+		// =============================================
+		// 🟡 WEIGHT CHART
+		// =============================================
 		window.weightChart = new Chart(weightCtx, {
 			type: "line",
 			data: {
 				labels,
 				datasets: [
-					...goalLineDatasets, // ⬅️ added this
+					...goalLineDatasets, // faint dashed goal lines
 					{
 						label: "Weight (kg)",
 						data: weights,
@@ -179,20 +169,22 @@ async function loadAndRenderCharts() {
 				],
 			},
 			options: {
-				responsive: true, // default, but keep it explicit
+				responsive: true,
 				maintainAspectRatio: false,
 				plugins: {
 					legend: {
 						labels: {
 							color: "#fff",
-							// hide legend entries with null labels
+							// Hide legend entries for null labels
 							filter: (legendItem, chartData) =>
 								!!chartData.datasets[legendItem.datasetIndex].label,
 						},
 					},
-					tooltip: { filter: (ctx) => !!ctx.dataset.label },
+					tooltip: {
+						// Disable tooltip for goal lines
+						filter: (ctx) => !!ctx.dataset.label,
+					},
 				},
-
 				scales: {
 					x: { ticks: { color: "#fff" } },
 					y: {
@@ -200,11 +192,10 @@ async function loadAndRenderCharts() {
 						max: 90,
 						ticks: {
 							color: "#fff",
-							// Force exact goal line values as tick positions
-							callback: (value) => value.toFixed(1) + " kg",
+							callback: (v) => v.toFixed(1) + " kg",
 						},
+						// 🔹 Force Y-axis to show only the goal weights
 						afterBuildTicks: (axis) => {
-							// Replace auto ticks with our custom goal weights (sorted descending)
 							axis.ticks = GOAL_WEIGHTS.slice()
 								.sort((a, b) => b - a)
 								.map((v) => ({ value: v }));
@@ -213,7 +204,7 @@ async function loadAndRenderCharts() {
 						grid: {
 							color: (ctx) =>
 								GOAL_WEIGHTS.includes(ctx.tick.value)
-									? "rgba(255,255,255,0.35)"
+									? "rgba(255,255,255,0.35)" // brighter for goal lines
 									: "rgba(255,255,255,0.1)",
 						},
 					},
@@ -221,6 +212,9 @@ async function loadAndRenderCharts() {
 			},
 		});
 
+		// =============================================
+		// 🟣 WORKOUT CHART
+		// =============================================
 		window.workoutChart = new Chart(workoutCtx, {
 			type: "bar",
 			data: {
@@ -244,9 +238,7 @@ async function loadAndRenderCharts() {
 				],
 			},
 			options: {
-				plugins: {
-					legend: { labels: { color: "#fff" } },
-				},
+				plugins: { legend: { labels: { color: "#fff" } } },
 				scales: {
 					x: { ticks: { color: "#fff" } },
 					y: { ticks: { color: "#fff" } },

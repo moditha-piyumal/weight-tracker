@@ -122,7 +122,22 @@
             padding-bottom: 70px;
         }
 
-        .weight-chart-wrap canvas {
+        /* .weight-chart-wrap canvas {
+            width: 100% !important;
+            height: 100% !important;
+            display: block;
+        } */
+
+        .workout-chart-wrap canvas {
+            width: 100% !important;
+            height: auto !important;
+            display: block;
+            aspect-ratio: 16 / 9;
+            /* or 4/3, adjust to your window shape */
+            box-sizing: border-box;
+        }
+
+        .workout-chart-wrap canvas {
             width: 100% !important;
             height: 100% !important;
             display: block;

@@ -242,7 +242,13 @@ async function loadAndRenderCharts() {
 					},
 				},
 				scales: {
-					x: { ticks: { color: "#fff" } },
+					x: {
+						offset: false,
+						ticks: { color: "#fff" },
+						grid: { offset: false },
+						bounds: "data",
+					},
+
 					y: {
 						min: 55,
 						max: 90,

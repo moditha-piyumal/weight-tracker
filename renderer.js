@@ -169,6 +169,34 @@ async function loadAndRenderCharts() {
 		const sma7 = simpleMovingAverage(weights, 7);
 		const sma20 = simpleMovingAverage(weights, 20);
 
+		// 🔍 Decide colors based on the latest weight vs SMA-20
+		let weightBorderColor = "#ffcc70"; // default line color (fallback)
+		let weightFillColor = "rgba(255, 204, 112, 0.2)"; // default area fill
+
+		// Find the last data point index
+		const lastIndex = weights.length - 1;
+
+		// Last recorded weight
+		const lastWeight = weights[lastIndex];
+
+		// Last SMA-20 value (may be null if < 20 entries)
+		const lastSMA20 = sma20[lastIndex];
+
+		if (lastSMA20 != null) {
+			// ✅ We have a valid SMA-20 value to compare with
+
+			if (lastWeight <= lastSMA20) {
+				// 🟢 Current weight is BELOW or equal to SMA-20 → good trend
+				weightBorderColor = "#00e676"; // bright green line
+				weightFillColor = "rgba(0, 230, 118, 0.25)"; // soft green glow
+			} else {
+				// 🔴 Current weight is ABOVE SMA-20 → warning trend
+				weightBorderColor = "#ff5252"; // red line
+				weightFillColor = "rgba(255, 82, 82, 0.25)"; // soft red glow
+			}
+		}
+		// If lastSMA20 is null (not enough days yet), the default colors are used.
+
 		// Prevent chart duplication by destroying existing instances
 		if (window.weightChart?.destroy) window.weightChart.destroy();
 		if (window.workoutChart?.destroy) window.workoutChart.destroy();
@@ -192,8 +220,9 @@ async function loadAndRenderCharts() {
 					{
 						label: "Weight (kg)",
 						data: weights,
-						borderColor: "#ffcc70",
-						backgroundColor: "rgba(255, 204, 112, 0.2)",
+						// 🎨 Dynamic colors based on latest weight vs SMA-20
+						borderColor: weightBorderColor, // picked above
+						backgroundColor: weightFillColor, // picked above
 						borderWidth: 3,
 						tension: 0.3,
 						fill: true,

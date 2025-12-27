@@ -299,6 +299,23 @@
             </div>
         </div>
 
+        <!-- === Goal Trajectory (Minimal Pass-1 UI) === -->
+        <div class="form-card">
+            <form id="goalForm" class="form-row">
+                <label for="goalStartDate">Start Date</label>
+                <input type="date" id="goalStartDate" />
+
+                <label for="goalTargetDate">Target Date</label>
+                <input type="date" id="goalTargetDate" required />
+
+                <label for="goalTargetWeight">Target Weight (kg)</label>
+                <input type="number" id="goalTargetWeight" step="0.1" required />
+
+                <button type="submit">🎯 Set Goal</button>
+            </form>
+        </div>
+
+
 
         <!-- === Weight Chart === -->
         <div class="chart-container weight-chart-wrap">

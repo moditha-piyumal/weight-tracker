@@ -47,6 +47,41 @@ function simpleMovingAverage(data, windowSize) {
 	return out;
 }
 
+// =============================================
+// 📐 GOAL LINE GENERATOR
+// =============================================
+function generateGoalLine(labels, weights, goal) {
+	if (!goal) return null;
+
+	// Find the index of the chosen start date
+	const startIndex = labels.indexOf(goal.start_date);
+	if (startIndex === -1) return null;
+
+	const startDate = new Date(goal.start_date);
+	const targetDate = new Date(goal.target_date);
+	const today = new Date();
+
+	const totalDays = (targetDate - startDate) / (1000 * 60 * 60 * 24);
+
+	return labels.map((labelDate, i) => {
+		const d = new Date(labelDate);
+
+		// ❌ Before start date → invisible
+		if (i < startIndex) return null;
+
+		// ❌ Future dates → invisible
+		if (d > today) return null;
+
+		const elapsedDays = (d - startDate) / (1000 * 60 * 60 * 24);
+
+		const progress = elapsedDays / totalDays;
+
+		return (
+			goal.start_weight + progress * (goal.target_weight - goal.start_weight)
+		);
+	});
+}
+
 // ===============================
 // 🎯 Ask main process to check goals for this weight
 //    - Calls ipcMain.handle("check-goals") in main.js
@@ -143,6 +178,66 @@ window.addEventListener("DOMContentLoaded", () => {
 		}
 	});
 
+	// =============================================
+	// 🎯 GOAL FORM HANDLER
+	// =============================================
+	const goalForm = document.getElementById("goalForm");
+
+	goalForm.addEventListener("submit", async (e) => {
+		e.preventDefault();
+
+		const startDateInput = document.getElementById("goalStartDate").value;
+		const targetDate = document.getElementById("goalTargetDate").value;
+		const targetWeight = parseFloat(
+			document.getElementById("goalTargetWeight").value
+		);
+
+		if (!targetDate || isNaN(targetWeight)) {
+			alert("Please enter a valid target date and weight.");
+			return;
+		}
+
+		// 📌 Fetch entries to resolve start weight
+		const entries = await ipcRenderer.invoke("get-entries");
+
+		if (!entries.length) {
+			alert("You must have at least one weight entry first.");
+			return;
+		}
+
+		let startDate = startDateInput;
+		let startWeight;
+
+		if (startDate) {
+			const match = entries.find((e) => e.date_local === startDate);
+			if (!match) {
+				alert("No weight entry exists on the selected start date.");
+				return;
+			}
+			startWeight = match.weight_kg_1dp;
+		} else {
+			// Default: latest real entry
+			const last = entries[entries.length - 1];
+			startDate = last.date_local;
+			startWeight = last.weight_kg_1dp;
+		}
+
+		// 🧠 Save goal
+		const res = await ipcRenderer.invoke("goal:save", {
+			start_date: startDate,
+			start_weight: startWeight,
+			target_date: targetDate,
+			target_weight: targetWeight,
+		});
+
+		if (res.ok) {
+			alert("🎯 Goal saved!");
+			await loadAndRenderCharts(); // redraw with goal line
+		} else {
+			alert("Failed to save goal.");
+		}
+	});
+
 	// Load charts after startup
 	loadAndRenderCharts();
 });
@@ -157,6 +252,9 @@ async function loadAndRenderCharts() {
 		const entries = await ipcRenderer.invoke("get-entries");
 		console.log("Fetched entries:", entries);
 
+		// 🎯 Fetch active goal (if any)
+		const goal = await ipcRenderer.invoke("goal:get");
+
 		if (!entries || entries.length === 0) {
 			console.log("No entries found yet — waiting for first entry.");
 			return;
@@ -165,6 +263,9 @@ async function loadAndRenderCharts() {
 		// Extract data arrays
 		const labels = entries.map((e) => e.date_local);
 		const weights = entries.map((e) => e.weight_kg_1dp);
+		// 📐 Generate goal trajectory line (partial, time-revealed)
+		const goalLine = generateGoalLine(labels, weights, goal);
+
 		const workouts = entries.map((e) => e.workout_minutes);
 		const sma7 = simpleMovingAverage(weights, 7);
 		const sma20 = simpleMovingAverage(weights, 20);
@@ -210,48 +311,69 @@ async function loadAndRenderCharts() {
 
 		// =============================================
 		// 🟡 WEIGHT CHART
+		// ===============================
+		// 📦 Build datasets safely
+		// ===============================
+		const weightDatasets = [...goalLineDatasets];
+
+		// 🎯 Add goal trajectory ONLY if it exists
+		if (goalLine) {
+			weightDatasets.push({
+				label: "Goal trajectory",
+				data: goalLine,
+				borderColor: "#00b0ff",
+				borderWidth: 2,
+				borderDash: [8, 4],
+				pointRadius: 0,
+				tension: 0,
+				spanGaps: true,
+				order: 1,
+			});
+		}
+
+		// ✅ Real weight data (always present)
+		weightDatasets.push(
+			{
+				label: "Weight (kg)",
+				data: weights,
+				borderColor: weightBorderColor,
+				backgroundColor: weightFillColor,
+				borderWidth: 3,
+				tension: 0.3,
+				fill: true,
+				pointRadius: 3,
+				pointBackgroundColor: "#ffe6a7",
+				order: 2,
+			},
+			{
+				label: "SMA-7 (trend)",
+				data: sma7,
+				borderColor: "#ec3db2ff",
+				borderWidth: 1,
+				tension: 0.3,
+				borderDash: [6, 2],
+				pointRadius: 0,
+				spanGaps: true,
+				order: 1,
+			},
+			{
+				label: "SMA-20 (trend)",
+				data: sma20,
+				borderColor: "#ece7e5ff",
+				borderWidth: 1,
+				tension: 0.3,
+				pointRadius: 2,
+				spanGaps: true,
+				order: 1,
+			}
+		);
+
 		// =============================================
 		window.weightChart = new Chart(weightCtx, {
 			type: "line",
 			data: {
 				labels,
-				datasets: [
-					...goalLineDatasets, // faint dashed goal lines
-					{
-						label: "Weight (kg)",
-						data: weights,
-						// 🎨 Dynamic colors based on latest weight vs SMA-20
-						borderColor: weightBorderColor, // picked above
-						backgroundColor: weightFillColor, // picked above
-						borderWidth: 3,
-						tension: 0.3,
-						fill: true,
-						pointRadius: 3,
-						pointBackgroundColor: "#ffe6a7",
-						order: 2,
-					},
-					{
-						label: "SMA-7 (trend)",
-						data: sma7,
-						borderColor: "#ec3db2ff",
-						borderWidth: 1,
-						tension: 0.3,
-						borderDash: [6, 2],
-						pointRadius: 0,
-						spanGaps: true,
-						order: 1,
-					},
-					{
-						label: "SMA-20 (trend)",
-						data: sma20,
-						borderColor: "#ece7e5ff",
-						borderWidth: 1,
-						tension: 0.3,
-						pointRadius: 2,
-						spanGaps: true,
-						order: 1,
-					},
-				],
+				datasets: weightDatasets,
 			},
 			options: {
 				responsive: true,

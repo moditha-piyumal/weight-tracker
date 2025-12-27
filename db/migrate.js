@@ -43,7 +43,25 @@ function runMigrations() {
   `
 	).run();
 
-	// 3) Settings table: tiny key/value store (e.g., reminder time)
+	// 3) Weight goal trajectory (single active goal)
+	db.prepare(
+		`
+  CREATE TABLE IF NOT EXISTS weight_goals (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    start_date TEXT NOT NULL,     -- YYYY-MM-DD (must exist in entries)
+    start_weight REAL NOT NULL,   -- kg at start_date
+
+    target_date TEXT NOT NULL,    -- future YYYY-MM-DD
+    target_weight REAL NOT NULL,  -- desired kg at target_date
+
+    created_at_utc TEXT NOT NULL,
+    updated_at_utc TEXT NOT NULL
+  );
+`
+	).run();
+
+	// 4) Settings table: tiny key/value store (e.g., reminder time)
 	db.prepare(
 		`
     CREATE TABLE IF NOT EXISTS settings (

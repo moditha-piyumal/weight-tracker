@@ -80,6 +80,53 @@ const Database = require("better-sqlite3");
 const dbPath = path.join(__dirname, "db", "weight-tracker.db");
 const db = new Database(dbPath);
 
+// =============================================
+// 🎯 GOAL LINE (single active goal)
+// =============================================
+
+// 📌 Get the current goal (only one exists, newest is the one)
+ipcMain.handle("goal:get", () => {
+	try {
+		return db
+			.prepare("SELECT * FROM weight_goals ORDER BY id DESC LIMIT 1")
+			.get();
+	} catch (err) {
+		console.error("❌ Error getting goal:", err.message);
+		return null;
+	}
+});
+
+// 📌 Save a new goal (delete old one first to enforce ONE goal rule)
+ipcMain.handle("goal:save", (event, goal) => {
+	try {
+		const now = new Date().toISOString();
+
+		// 🧹 Only one goal allowed, so remove any old goal first
+		db.prepare("DELETE FROM weight_goals").run();
+
+		// ✅ Insert the new goal
+		db.prepare(
+			`
+      INSERT INTO weight_goals
+      (start_date, start_weight, target_date, target_weight, created_at_utc, updated_at_utc)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `
+		).run(
+			goal.start_date,
+			goal.start_weight,
+			goal.target_date,
+			goal.target_weight,
+			now,
+			now
+		);
+
+		return { ok: true };
+	} catch (err) {
+		console.error("❌ Error saving goal:", err.message);
+		return { ok: false, message: err.message };
+	}
+});
+
 ipcMain.handle("save-entry", (event, data) => {
 	try {
 		const { date, weight, workout } = data;

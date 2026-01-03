@@ -48,7 +48,7 @@ function simpleMovingAverage(data, windowSize) {
 }
 
 // =============================================
-// 📐 GOAL LINE GENERATOR
+// 📐 GOAL LINE GENERATOR (timezone-safe)
 // =============================================
 function generateGoalLine(labels, weights, goal) {
 	if (!goal) return null;
@@ -57,23 +57,31 @@ function generateGoalLine(labels, weights, goal) {
 	const startIndex = labels.indexOf(goal.start_date);
 	if (startIndex === -1) return null;
 
-	const startDate = new Date(goal.start_date);
-	const targetDate = new Date(goal.target_date);
-	const today = new Date();
+	// ✅ Use date-strings only (no time-of-day bugs)
+	const todayStr = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD
 
-	const totalDays = (targetDate - startDate) / (1000 * 60 * 60 * 24);
+	// Helper: convert YYYY-MM-DD → day number (UTC-safe)
+	function dayNumber(dateStr) {
+		const [y, m, d] = dateStr.split("-").map(Number);
+		return Date.UTC(y, m - 1, d) / 86400000;
+	}
+
+	const startDay = dayNumber(goal.start_date);
+	const targetDay = dayNumber(goal.target_date);
+	const totalDays = targetDay - startDay;
+
+	// ❌ Invalid goal (same day or backwards)
+	if (totalDays <= 0) return null;
 
 	return labels.map((labelDate, i) => {
-		const d = new Date(labelDate);
-
-		// ❌ Before start date → invisible
+		// ❌ Before start date
 		if (i < startIndex) return null;
 
-		// ❌ Future dates → invisible
-		if (d > today) return null;
+		// ❌ Future dates (string compare is safe for ISO dates)
+		if (labelDate > todayStr) return null;
 
-		const elapsedDays = (d - startDate) / (1000 * 60 * 60 * 24);
-
+		const currentDay = dayNumber(labelDate);
+		const elapsedDays = currentDay - startDay;
 		const progress = elapsedDays / totalDays;
 
 		return (

@@ -33,7 +33,7 @@ function makeGoalDatasets(labels) {
 // =============================================
 // 📉 HELPER FUNCTION: Simple Moving Average
 // =============================================
-// Returns a smoothed array for 7-day or 20-day averages
+// Returns a smoothed array for 10-day or 20-day averages
 function simpleMovingAverage(data, windowSize) {
 	const out = new Array(data.length).fill(null);
 	let sum = 0;
@@ -166,7 +166,7 @@ async function loadAndRenderCharts() {
 		const labels = entries.map((e) => e.date_local);
 		const weights = entries.map((e) => e.weight_kg_1dp);
 		const workouts = entries.map((e) => e.workout_minutes);
-		const sma7 = simpleMovingAverage(weights, 7);
+		const sma10 = simpleMovingAverage(weights, 10);
 		const sma20 = simpleMovingAverage(weights, 20);
 
 		// Prevent chart duplication by destroying existing instances
@@ -202,8 +202,8 @@ async function loadAndRenderCharts() {
 						order: 2,
 					},
 					{
-						label: "SMA-7 (trend)",
-						data: sma7,
+						label: "SMA-10 (trend)",
+						data: sma10,
 						borderColor: "#7FDBFF",
 						borderWidth: 2,
 						tension: 0.3,

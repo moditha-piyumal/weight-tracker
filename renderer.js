@@ -275,7 +275,7 @@ async function loadAndRenderCharts() {
 		const goalLine = generateGoalLine(labels, weights, goal);
 
 		const workouts = entries.map((e) => e.workout_minutes);
-		const sma7 = simpleMovingAverage(weights, 7);
+		const sma10 = simpleMovingAverage(weights, 10);
 		const sma20 = simpleMovingAverage(weights, 20);
 
 		// 🔍 Decide colors based on the latest weight vs SMA-20
@@ -353,8 +353,8 @@ async function loadAndRenderCharts() {
 				order: 2,
 			},
 			{
-				label: "SMA-7 (trend)",
-				data: sma7,
+				label: "SMA-10 (trend)",
+				data: sma10,
 				borderColor: "#ec3db2ff",
 				borderWidth: 2,
 				tension: 0.3,

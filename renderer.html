@@ -265,6 +265,27 @@
             background: #ffe299;
             transform: translateX(-50%) scale(1.05);
         }
+
+        .chart-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .chart-toggle {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            color: #ffddaa;
+        }
+
+        .chart-toggle input {
+            width: 16px;
+            height: 16px;
+            accent-color: #ffcc70;
+        }
     </style>
 </head>
 
@@ -319,7 +340,13 @@
 
         <!-- === Weight Chart === -->
         <div class="chart-container weight-chart-wrap">
-            <h3>📈 Weight Progress</h3>
+            <div class="chart-header">
+                <h3>📈 Weight Progress</h3>
+                <label class="chart-toggle" for="limitWeightChart">
+                    <input type="checkbox" id="limitWeightChart" checked />
+                    ✅ Last 30 days
+                </label>
+            </div>
             <canvas id="weightChart"></canvas>
         </div>
 

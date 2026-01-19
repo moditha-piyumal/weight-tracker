@@ -248,6 +248,13 @@ window.addEventListener("DOMContentLoaded", () => {
 
 	// Load charts after startup
 	loadAndRenderCharts();
+
+	const limitWeightChart = document.getElementById("limitWeightChart");
+	if (limitWeightChart) {
+		limitWeightChart.addEventListener("change", () => {
+			loadAndRenderCharts();
+		});
+	}
 });
 
 // =============================================
@@ -268,25 +275,41 @@ async function loadAndRenderCharts() {
 			return;
 		}
 
+		const limitWeightChart = document.getElementById("limitWeightChart");
+		const shouldLimitWeightChart = Boolean(limitWeightChart?.checked);
+
+		const cutoffDate = new Date();
+		cutoffDate.setHours(0, 0, 0, 0);
+		cutoffDate.setDate(cutoffDate.getDate() - 30);
+
+		const weightEntries = shouldLimitWeightChart
+			? entries.filter((entry) => {
+					const entryDate = new Date(`${entry.date_local}T00:00:00`);
+					return !Number.isNaN(entryDate.getTime()) && entryDate >= cutoffDate;
+				})
+			: entries;
+
 		// Extract data arrays
 		const labels = entries.map((e) => e.date_local);
 		const weights = entries.map((e) => e.weight_kg_1dp);
+		const weightLabels = weightEntries.map((e) => e.date_local);
+		const weightValues = weightEntries.map((e) => e.weight_kg_1dp);
 		// 📐 Generate goal trajectory line (partial, time-revealed)
-		const goalLine = generateGoalLine(labels, weights, goal);
+		const goalLine = generateGoalLine(weightLabels, weightValues, goal);
 
 		const workouts = entries.map((e) => e.workout_minutes);
-		const sma10 = simpleMovingAverage(weights, 10);
-		const sma20 = simpleMovingAverage(weights, 20);
+		const sma10 = simpleMovingAverage(weightValues, 10);
+		const sma20 = simpleMovingAverage(weightValues, 20);
 
 		// 🔍 Decide colors based on the latest weight vs SMA-20
 		let weightBorderColor = "#ffcc70"; // default line color (fallback)
 		let weightFillColor = "rgba(255, 204, 112, 0.2)"; // default area fill
 
 		// Find the last data point index
-		const lastIndex = weights.length - 1;
+		const lastIndex = weightValues.length - 1;
 
 		// Last recorded weight
-		const lastWeight = weights[lastIndex];
+		const lastWeight = weightValues[lastIndex];
 
 		// Last SMA-20 value (may be null if < 20 entries)
 		const lastSMA20 = sma20[lastIndex];
@@ -315,7 +338,7 @@ async function loadAndRenderCharts() {
 		const workoutCtx = document.getElementById("workoutChart").getContext("2d");
 
 		// Add horizontal goal lines
-		const goalLineDatasets = makeGoalDatasets(labels);
+		const goalLineDatasets = makeGoalDatasets(weightLabels);
 
 		// =============================================
 		// 🟡 WEIGHT CHART
@@ -342,7 +365,7 @@ async function loadAndRenderCharts() {
 		weightDatasets.push(
 			{
 				label: "Weight (kg)",
-				data: weights,
+				data: weightValues,
 				borderColor: weightBorderColor,
 				backgroundColor: weightFillColor,
 				borderWidth: 2,
@@ -379,7 +402,7 @@ async function loadAndRenderCharts() {
 		window.weightChart = new Chart(weightCtx, {
 			type: "line",
 			data: {
-				labels,
+				labels: weightLabels,
 				datasets: weightDatasets,
 			},
 			options: {

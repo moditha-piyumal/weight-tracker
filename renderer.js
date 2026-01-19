@@ -278,8 +278,15 @@ async function loadAndRenderCharts() {
 		const limitWeightChart = document.getElementById("limitWeightChart");
 		const shouldLimitWeightChart = Boolean(limitWeightChart?.checked);
 
+		const cutoffDate = new Date();
+		cutoffDate.setHours(0, 0, 0, 0);
+		cutoffDate.setDate(cutoffDate.getDate() - 30);
+
 		const weightEntries = shouldLimitWeightChart
-			? entries.slice(-30)
+			? entries.filter((entry) => {
+					const entryDate = new Date(`${entry.date_local}T00:00:00`);
+					return !Number.isNaN(entryDate.getTime()) && entryDate >= cutoffDate;
+				})
 			: entries;
 
 		// Extract data arrays

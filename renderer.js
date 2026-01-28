@@ -148,6 +148,10 @@ document.getElementById("backupBtn").addEventListener("click", async () => {
 window.addEventListener("DOMContentLoaded", () => {
 	console.log("Renderer is running!");
 
+	if (window.ChartZoom) {
+		Chart.register(window.ChartZoom);
+	}
+
 	// Pre-fill today's date
 	const dateField = document.getElementById("date");
 	dateField.value = new Date().toLocaleDateString("en-CA");
@@ -253,6 +257,15 @@ window.addEventListener("DOMContentLoaded", () => {
 	if (limitWeightChart) {
 		limitWeightChart.addEventListener("change", () => {
 			loadAndRenderCharts();
+		});
+	}
+
+	const resetWeightZoom = document.getElementById("resetWeightZoom");
+	if (resetWeightZoom) {
+		resetWeightZoom.addEventListener("click", () => {
+			if (window.weightChart?.resetZoom) {
+				window.weightChart.resetZoom();
+			}
 		});
 	}
 });
@@ -420,6 +433,21 @@ async function loadAndRenderCharts() {
 					tooltip: {
 						// Disable tooltip for goal lines
 						filter: (ctx) => !!ctx.dataset.label,
+					},
+					zoom: {
+						pan: {
+							enabled: true,
+							mode: "x",
+						},
+						zoom: {
+							wheel: {
+								enabled: true,
+							},
+							pinch: {
+								enabled: true,
+							},
+							mode: "x",
+						},
 					},
 				},
 				scales: {

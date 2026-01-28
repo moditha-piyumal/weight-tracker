@@ -11,6 +11,8 @@
 
     <!-- ✅ Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- ✅ Chart.js Zoom Plugin -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1"></script>
 
     <style>
         /* === Global Styles === */
@@ -271,6 +273,7 @@
             align-items: center;
             justify-content: space-between;
             gap: 12px;
+            flex-wrap: wrap;
         }
 
         .chart-toggle {
@@ -285,6 +288,35 @@
             width: 16px;
             height: 16px;
             accent-color: #ffcc70;
+        }
+
+        .chart-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .chart-action {
+            background: rgba(255, 255, 255, 0.12);
+            color: #ffddaa;
+            border: 1px solid rgba(255, 221, 170, 0.4);
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .chart-action:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 0 8px rgba(255, 204, 112, 0.4);
+        }
+
+        .chart-hint {
+            font-size: 0.75rem;
+            color: rgba(255, 221, 170, 0.8);
         }
     </style>
 </head>
@@ -342,10 +374,14 @@
         <div class="chart-container weight-chart-wrap">
             <div class="chart-header">
                 <h3>📈 Weight Progress</h3>
-                <label class="chart-toggle" for="limitWeightChart">
-                    <input type="checkbox" id="limitWeightChart" checked />
-                    ✅ Last 30 days
-                </label>
+                <div class="chart-actions">
+                    <span class="chart-hint">Scroll to zoom • Drag to pan</span>
+                    <label class="chart-toggle" for="limitWeightChart">
+                        <input type="checkbox" id="limitWeightChart" checked />
+                        ✅ Last 30 days
+                    </label>
+                    <button type="button" class="chart-action" id="resetWeightZoom">Reset zoom</button>
+                </div>
             </div>
             <canvas id="weightChart"></canvas>
         </div>
